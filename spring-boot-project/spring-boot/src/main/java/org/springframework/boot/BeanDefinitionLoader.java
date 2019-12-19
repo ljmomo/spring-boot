@@ -131,6 +131,7 @@ class BeanDefinitionLoader {
 	}
 
 	private int load(Object source) {
+		//根据不同类型进行不同的加载
 		Assert.notNull(source, "Source must not be null");
 		if (source instanceof Class<?>) {
 			return load((Class<?>) source);

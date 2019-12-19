@@ -45,10 +45,12 @@ import org.springframework.util.ErrorHandler;
  */
 public class EventPublishingRunListener implements SpringApplicationRunListener, Ordered {
 
+	//Spring 应用
 	private final SpringApplication application;
 
 	private final String[] args;
 
+	//事件广播器
 	private final SimpleApplicationEventMulticaster initialMulticaster;
 
 	public EventPublishingRunListener(SpringApplication application, String[] args) {
