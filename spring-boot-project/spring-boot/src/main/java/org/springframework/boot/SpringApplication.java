@@ -312,6 +312,7 @@ public class SpringApplication {
 			exceptionReporters = getSpringFactoriesInstances(SpringBootExceptionReporter.class,
 					new Class[] { ConfigurableApplicationContext.class }, context);
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+			//刷新容器
 			refreshContext(context);
 			afterRefresh(context, applicationArguments);
 			stopWatch.stop();
