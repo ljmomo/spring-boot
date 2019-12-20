@@ -47,17 +47,22 @@ class OnPropertyCondition extends SpringBootCondition {
 
 	@Override
 	public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
+		//获得 @ConditionalOnProperty 注解的属性
 		List<AnnotationAttributes> allAnnotationAttributes = annotationAttributesFromMultiValueMap(
 				metadata.getAllAnnotationAttributes(ConditionalOnProperty.class.getName()));
+		//存储匹配和不匹配的结果消息结果
 		List<ConditionMessage> noMatch = new ArrayList<>();
 		List<ConditionMessage> match = new ArrayList<>();
+		//遍历 annotationAttributes 属性数组，逐个判断是否匹配，并添加到结果
 		for (AnnotationAttributes annotationAttributes : allAnnotationAttributes) {
 			ConditionOutcome outcome = determineOutcome(annotationAttributes, context.getEnvironment());
 			(outcome.isMatch() ? match : noMatch).add(outcome.getConditionMessage());
 		}
+		//如果有不匹配的，则返回不匹配
 		if (!noMatch.isEmpty()) {
 			return ConditionOutcome.noMatch(ConditionMessage.of(noMatch));
 		}
+        //如果都匹配，则返回匹配
 		return ConditionOutcome.match(ConditionMessage.of(match));
 	}
 

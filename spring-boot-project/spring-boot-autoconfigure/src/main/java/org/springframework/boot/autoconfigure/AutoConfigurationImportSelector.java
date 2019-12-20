@@ -113,11 +113,13 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 			return EMPTY_ENTRY;
 		}
 		AnnotationAttributes attributes = getAttributes(annotationMetadata);
+		//获取满足的配置项
 		List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
 		configurations = removeDuplicates(configurations);
 		Set<String> exclusions = getExclusions(annotationMetadata, attributes);
 		checkExcludedClasses(configurations, exclusions);
 		configurations.removeAll(exclusions);
+		//
 		configurations = filter(configurations, autoConfigurationMetadata);
 		fireAutoConfigurationImportEvents(configurations, exclusions);
 		return new AutoConfigurationEntry(configurations, exclusions);
@@ -168,6 +170,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 	 * @return a list of candidate configurations
 	 */
 	protected List<String> getCandidateConfigurations(AnnotationMetadata metadata, AnnotationAttributes attributes) {
+		//加载指定类型 EnableAutoConfiguration 对应的，在 META-INF/spring.factories 里的类名的数组
 		List<String> configurations = SpringFactoriesLoader.loadFactoryNames(getSpringFactoriesLoaderFactoryClass(),
 				getBeanClassLoader());
 		Assert.notEmpty(configurations, "No auto configuration classes found in META-INF/spring.factories. If you "
@@ -241,10 +244,15 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		String[] candidates = StringUtils.toStringArray(configurations);
 		boolean[] skip = new boolean[candidates.length];
 		boolean skipped = false;
+		//遍历 AutoConfigurationImportFilter 数组，逐个匹配
 		for (AutoConfigurationImportFilter filter : getAutoConfigurationImportFilters()) {
+			//设置 AutoConfigurationImportFilter 的属性
 			invokeAwareMethods(filter);
+			//执行批量匹配，并返回匹配结果
 			boolean[] match = filter.match(candidates, autoConfigurationMetadata);
+			//遍历匹配结果，判断哪些需要忽略
 			for (int i = 0; i < match.length; i++) {
+				//如果有不匹配的 skip =true
 				if (!match[i]) {
 					skip[i] = true;
 					candidates[i] = null;
@@ -252,20 +260,24 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 				}
 			}
 		}
+		//如果没有需要忽略的，直接返回 configurations 即可
 		if (!skipped) {
 			return configurations;
 		}
+		// 如果存在需要忽略的，构建新的数组，排除掉忽略的
 		List<String> result = new ArrayList<>(candidates.length);
 		for (int i = 0; i < candidates.length; i++) {
 			if (!skip[i]) {
 				result.add(candidates[i]);
 			}
 		}
+		//打印，消耗的时间，已经排除的数量
 		if (logger.isTraceEnabled()) {
 			int numberFiltered = configurations.size() - result.size();
 			logger.trace("Filtered " + numberFiltered + " auto configuration class in "
 					+ TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime) + " ms");
 		}
+		//返回
 		return new ArrayList<>(result);
 	}
 

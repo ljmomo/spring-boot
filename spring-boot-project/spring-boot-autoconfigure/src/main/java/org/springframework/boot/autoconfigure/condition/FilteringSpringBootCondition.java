@@ -45,18 +45,26 @@ abstract class FilteringSpringBootCondition extends SpringBootCondition
 
 	@Override
 	public boolean[] match(String[] autoConfigurationClasses, AutoConfigurationMetadata autoConfigurationMetadata) {
+		//获得 ConditionEvaluationReport 对象
 		ConditionEvaluationReport report = ConditionEvaluationReport.find(this.beanFactory);
+		//执行批量的匹配，并返回匹配结果
 		ConditionOutcome[] outcomes = getOutcomes(autoConfigurationClasses, autoConfigurationMetadata);
 		boolean[] match = new boolean[outcomes.length];
+		//遍历 outcomes 结果数组
 		for (int i = 0; i < outcomes.length; i++) {
+			//赋值 match 数组  如果返回结果结果为空，也认为匹配
 			match[i] = (outcomes[i] == null || outcomes[i].isMatch());
+			//如果不匹配，打印日志和记录。
 			if (!match[i] && outcomes[i] != null) {
+				// 打印日志
 				logOutcome(autoConfigurationClasses[i], outcomes[i]);
 				if (report != null) {
+					// 记录
 					report.recordConditionEvaluation(autoConfigurationClasses[i], this, outcomes[i]);
 				}
 			}
 		}
+		//返回
 		return match;
 	}
 
@@ -87,6 +95,7 @@ abstract class FilteringSpringBootCondition extends SpringBootCondition
 			return Collections.emptyList();
 		}
 		List<String> matches = new ArrayList<>(classNames.size());
+		//遍历 classNames 数组，使用 ClassNameFilter 进行判断，是否匹配。
 		for (String candidate : classNames) {
 			if (classNameFilter.matches(candidate, classLoader)) {
 				matches.add(candidate);
