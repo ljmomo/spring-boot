@@ -138,6 +138,7 @@ class BeanDefinitionLoader {
 	 */
 	int load() {
 		int count = 0;
+		//遍历 sources 数组，逐个加载
 		for (Object source : this.sources) {
 			count += load(source);
 		}
@@ -147,15 +148,19 @@ class BeanDefinitionLoader {
 	private int load(Object source) {
 		//根据不同类型进行不同的加载
 		Assert.notNull(source, "Source must not be null");
+		// 如果是 Class 类型，则使用 AnnotatedBeanDefinitionReader 执行加载
 		if (source instanceof Class<?>) {
 			return load((Class<?>) source);
 		}
+		// 如果是 Resource 类型，则使用 XmlBeanDefinitionReader 执行加载
 		if (source instanceof Resource) {
 			return load((Resource) source);
 		}
+		//如果是 Package 类型，则使用 ClassPathBeanDefinitionScanner 执行加载
 		if (source instanceof Package) {
 			return load((Package) source);
 		}
+		// 如果是 CharSequence 类型，则各种尝试去加载
 		if (source instanceof CharSequence) {
 			return load((CharSequence) source);
 		}
@@ -168,6 +173,7 @@ class BeanDefinitionLoader {
 			GroovyBeanDefinitionSource loader = BeanUtils.instantiateClass(source, GroovyBeanDefinitionSource.class);
 			load(loader);
 		}
+		//如果是 Component ，则执行注册
 		if (isComponent(source)) {
 			this.annotatedReader.register(source);
 			return 1;
@@ -189,6 +195,7 @@ class BeanDefinitionLoader {
 			}
 			return this.groovyReader.loadBeanDefinitions(source);
 		}
+		//使用 XmlBeanDefinitionReader 加载 BeanDefinition
 		return this.xmlReader.loadBeanDefinitions(source);
 	}
 
@@ -197,15 +204,17 @@ class BeanDefinitionLoader {
 	}
 
 	private int load(CharSequence source) {
+		//解析 source 。因为，有可能里面带有占位符。
 		String resolvedSource = this.xmlReader.getEnvironment().resolvePlaceholders(source.toString());
 		// Attempt as a Class
 		try {
+			//尝试按照 Class 进行加载
 			return load(ClassUtils.forName(resolvedSource, null));
 		}
 		catch (IllegalArgumentException | ClassNotFoundException ex) {
 			// swallow exception and continue
 		}
-		// Attempt as resources
+		// Attempt as resources  尝试按照 Resource 进行加载
 		Resource[] resources = findResources(resolvedSource);
 		int loadCount = 0;
 		boolean atLeastOneResourceExists = false;
@@ -215,10 +224,11 @@ class BeanDefinitionLoader {
 				loadCount += load(resource);
 			}
 		}
+		// 有加载到，则认为成功，返回。
 		if (atLeastOneResourceExists) {
 			return loadCount;
 		}
-		// Attempt as package
+		// Attempt as package 尝试按照 Package 进行加载
 		Package packageResource = findPackage(resolvedSource);
 		if (packageResource != null) {
 			return load(packageResource);

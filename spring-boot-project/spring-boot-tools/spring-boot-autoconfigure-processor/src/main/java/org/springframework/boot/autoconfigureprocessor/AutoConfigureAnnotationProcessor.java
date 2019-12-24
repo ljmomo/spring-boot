@@ -109,9 +109,11 @@ public class AutoConfigureAnnotationProcessor extends AbstractProcessor {
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+		//遍历 annotations 集合，逐个处理
 		for (Map.Entry<String, String> entry : this.annotations.entrySet()) {
 			process(roundEnv, entry.getKey(), entry.getValue());
 		}
+		//处理完成，写到文件 PROPERTIES_PATH 中
 		if (roundEnv.processingOver()) {
 			try {
 				writeProperties();
