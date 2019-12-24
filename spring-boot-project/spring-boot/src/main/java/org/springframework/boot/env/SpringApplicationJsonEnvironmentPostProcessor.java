@@ -97,9 +97,11 @@ public class SpringApplicationJsonEnvironmentPostProcessor implements Environmen
 	}
 
 	private void processJson(ConfigurableEnvironment environment, JsonPropertyValue propertyValue) {
+		//解析 json 字符串，成 Map 对象
 		JsonParser parser = JsonParserFactory.getJsonParser();
 		Map<String, Object> map = parser.parseMap(propertyValue.getJson());
 		if (!map.isEmpty()) {
+			//创建 JsonPropertySource 对象，添加到 environment 中
 			addJsonPropertySource(environment, new JsonPropertySource(propertyValue, flatten(map)));
 		}
 	}
@@ -202,9 +204,11 @@ public class SpringApplicationJsonEnvironmentPostProcessor implements Environmen
 		}
 
 		static JsonPropertyValue get(PropertySource<?> propertySource) {
+			//获得 candidate 对应的属性值
 			for (String candidate : CANDIDATES) {
 				Object value = propertySource.getProperty(candidate);
 				if (value instanceof String && StringUtils.hasLength((String) value)) {
+					// 创建 JsonPropertyValue 对象，然后返回
 					return new JsonPropertyValue(propertySource, candidate, (String) value);
 				}
 			}

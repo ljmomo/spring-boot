@@ -183,6 +183,7 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 	}
 
 	private void onApplicationEnvironmentPreparedEvent(ApplicationEnvironmentPreparedEvent event) {
+		//加载指定类型 EnvironmentPostProcessor 对应的，在 META-INF/spring.factories 里的类名的数组
 		List<EnvironmentPostProcessor> postProcessors = loadPostProcessors();
 		postProcessors.add(this);
 		AnnotationAwareOrderComparator.sort(postProcessors);
@@ -202,6 +203,7 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 
 	private void onApplicationPreparedEvent(ApplicationEvent event) {
 		this.logger.switchTo(ConfigFileApplicationListener.class);
+		//添加 PropertySourceOrderingPostProcessor 处理器
 		addPostProcessors(((ApplicationPreparedEvent) event).getApplicationContext());
 	}
 
@@ -212,7 +214,9 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 	 * @see #addPostProcessors(ConfigurableApplicationContext)
 	 */
 	protected void addPropertySources(ConfigurableEnvironment environment, ResourceLoader resourceLoader) {
+		//添加 RandomValuePropertySource 到 environment 中
 		RandomValuePropertySource.addToEnvironment(environment);
+		//创建 Loader 对象，进行加载
 		new Loader(environment, resourceLoader).load();
 	}
 
@@ -280,8 +284,10 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 		}
 
 		private void reorderSources(ConfigurableEnvironment environment) {
+			// 移除 DEFAULT_PROPERTIES 的属性源
 			PropertySource<?> defaultProperties = environment.getPropertySources().remove(DEFAULT_PROPERTIES);
 			if (defaultProperties != null) {
+				// 添加到 environment 尾部
 				environment.getPropertySources().addLast(defaultProperties);
 			}
 		}
@@ -315,8 +321,11 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 
 		Loader(ConfigurableEnvironment environment, ResourceLoader resourceLoader) {
 			this.environment = environment;
+			//创建 Loader 对象，进行加载
 			this.placeholdersResolver = new PropertySourcesPlaceholdersResolver(this.environment);
+			//创建 DefaultResourceLoader 对象
 			this.resourceLoader = (resourceLoader != null) ? resourceLoader : new DefaultResourceLoader();
+			//加载指定类型 PropertySourceLoader 对应的，在 META-INF/spring.factories 里的类名的数组
 			this.propertySourceLoaders = SpringFactoriesLoader.loadFactories(PropertySourceLoader.class,
 					getClass().getClassLoader());
 		}

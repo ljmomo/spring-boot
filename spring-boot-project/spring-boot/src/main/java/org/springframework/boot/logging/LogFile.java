@@ -67,8 +67,14 @@ public class LogFile {
 	 */
 	public static final String FILE_PATH_PROPERTY = "logging.file.path";
 
+	/**
+	 * 文件名称
+	 */
 	private final String file;
 
+	/**
+	 * 文件路径
+	 */
 	private final String path;
 
 	/**

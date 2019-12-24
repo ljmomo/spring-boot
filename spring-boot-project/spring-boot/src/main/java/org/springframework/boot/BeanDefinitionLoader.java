@@ -57,16 +57,26 @@ import org.springframework.util.StringUtils;
  */
 class BeanDefinitionLoader {
 
+	// 来源的数组
 	private final Object[] sources;
 
+	// 来源的数组
 	private final AnnotatedBeanDefinitionReader annotatedReader;
 
+	/**
+	 * Classpath 的 BeanDefinition 扫描器
+	 */
 	private final XmlBeanDefinitionReader xmlReader;
 
+	//Groovy 的 BeanDefinition 读取器
 	private BeanDefinitionReader groovyReader;
 
+	//Classpath 的 BeanDefinition 扫描器
 	private final ClassPathBeanDefinitionScanner scanner;
 
+	/**
+	 * 资源加载器
+	 */
 	private ResourceLoader resourceLoader;
 
 	/**
@@ -79,11 +89,15 @@ class BeanDefinitionLoader {
 		Assert.notNull(registry, "Registry must not be null");
 		Assert.notEmpty(sources, "Sources must not be empty");
 		this.sources = sources;
+		//创建 AnnotatedBeanDefinitionReader 对象
 		this.annotatedReader = new AnnotatedBeanDefinitionReader(registry);
+		//创建 XmlBeanDefinitionReader 对象
 		this.xmlReader = new XmlBeanDefinitionReader(registry);
+		//创建 GroovyBeanDefinitionReader 对象
 		if (isGroovyPresent()) {
 			this.groovyReader = new GroovyBeanDefinitionReader(registry);
 		}
+		//创建 ClassPathBeanDefinitionScanner 对象
 		this.scanner = new ClassPathBeanDefinitionScanner(registry);
 		this.scanner.addExcludeFilter(new ClassExcludeFilter(sources));
 	}

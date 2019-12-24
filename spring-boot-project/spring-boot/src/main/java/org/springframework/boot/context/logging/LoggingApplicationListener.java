@@ -216,26 +216,33 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 
 	@Override
 	public void onApplicationEvent(ApplicationEvent event) {
+		//在 Spring Boot 应用启动的时候
 		if (event instanceof ApplicationStartingEvent) {
 			onApplicationStartingEvent((ApplicationStartingEvent) event);
 		}
+		//在 Spring Boot 的 Environment 环境准备完成的时候
 		else if (event instanceof ApplicationEnvironmentPreparedEvent) {
 			onApplicationEnvironmentPreparedEvent((ApplicationEnvironmentPreparedEvent) event);
 		}
+		//在 Spring Boot 容器的准备工作已经完成（并未启动）的时候
 		else if (event instanceof ApplicationPreparedEvent) {
 			onApplicationPreparedEvent((ApplicationPreparedEvent) event);
 		}
+		//在 Spring Boot 容器关闭的时候
 		else if (event instanceof ContextClosedEvent
 				&& ((ContextClosedEvent) event).getApplicationContext().getParent() == null) {
 			onContextClosedEvent();
 		}
+		//// 在 Spring Boot 容器启动失败的时候
 		else if (event instanceof ApplicationFailedEvent) {
 			onApplicationFailedEvent();
 		}
 	}
 
 	private void onApplicationStartingEvent(ApplicationStartingEvent event) {
+		//创建 LoggingSystem 对象
 		this.loggingSystem = LoggingSystem.get(event.getSpringApplication().getClassLoader());
+		// LoggingSystem 的初始化的前置处理
 		this.loggingSystem.beforeInitialize();
 	}
 
@@ -243,6 +250,7 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 		if (this.loggingSystem == null) {
 			this.loggingSystem = LoggingSystem.get(event.getSpringApplication().getClassLoader());
 		}
+		// 初始化
 		initialize(event.getEnvironment(), event.getSpringApplication().getClassLoader());
 	}
 
@@ -278,15 +286,21 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 	 * @param classLoader the classloader
 	 */
 	protected void initialize(ConfigurableEnvironment environment, ClassLoader classLoader) {
+		//初始化 LoggingSystemProperties 配置
 		new LoggingSystemProperties(environment).apply();
+		//初始化 LogFile
 		this.logFile = LogFile.get(environment);
 		if (this.logFile != null) {
 			this.logFile.applyToSystemProperties();
 		}
 		this.loggerGroups = new LoggerGroups(DEFAULT_GROUP_LOGGERS);
+		//初始化早期的 Spring Boot Logging 级别
 		initializeEarlyLoggingLevel(environment);
+		//初始化 LoggingSystem 日志系统
 		initializeSystem(environment, this.loggingSystem, this.logFile);
+		//初始化最终的 Spring Boot Logging 级别
 		initializeFinalLoggingLevels(environment, this.loggingSystem);
+		//注册ShutdownHook
 		registerShutdownHookIfNecessary(environment, this.loggingSystem);
 	}
 
@@ -307,11 +321,15 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 	}
 
 	private void initializeSystem(ConfigurableEnvironment environment, LoggingSystem system, LogFile logFile) {
+		//创建 LoggingInitializationContext 对象
 		LoggingInitializationContext initializationContext = new LoggingInitializationContext(environment);
+		//获得日志组件的配置文件
 		String logConfig = environment.getProperty(CONFIG_PROPERTY);
+		//如果没配置，则直接初始化 LoggingSystem
 		if (ignoreLogConfig(logConfig)) {
 			system.initialize(initializationContext, null, logFile);
 		}
+		// 如果有配置，先尝试加载指定配置文件，然后在初始化 LoggingSystem
 		else {
 			try {
 				ResourceUtils.getURL(logConfig).openStream().close();
@@ -331,10 +349,13 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 	}
 
 	private void initializeFinalLoggingLevels(ConfigurableEnvironment environment, LoggingSystem system) {
+		//绑定日志组
 		bindLoggerGroups(environment);
+		// 如果有配置，先尝试加载指定配置文件，然后在初始化 LoggingSystem
 		if (this.springBootLogging != null) {
 			initializeLogLevel(system, this.springBootLogging);
 		}
+		//设置 environment 中配置的日志级别
 		setLogLevels(system, environment);
 	}
 
@@ -393,8 +414,11 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 	 * @since 2.2.0
 	 */
 	protected void setLogLevels(LoggingSystem system, ConfigurableEnvironment environment) {
+		//获取日志级别的配置
 		BiConsumer<String, LogLevel> customizer = getLogLevelConfigurer(system);
+		//创建 Binder 对象
 		Binder binder = Binder.get(environment);
+		//获得日志级别的集合
 		Map<String, LogLevel> levels = binder.bind(LOGGING_LEVEL, STRING_LOGLEVEL_MAP).orElseGet(Collections::emptyMap);
 		levels.forEach((name, level) -> configureLogLevel(name, level, customizer));
 	}
@@ -423,10 +447,14 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 	}
 
 	private void registerShutdownHookIfNecessary(Environment environment, LoggingSystem loggingSystem) {
+		//获得 logging.register-shutdown-hook 对应的配置值
 		boolean registerShutdownHook = environment.getProperty(REGISTER_SHUTDOWN_HOOK_PROPERTY, Boolean.class, false);
+		//如果开启
 		if (registerShutdownHook) {
+			//获得 shutdownHandler 钩子
 			Runnable shutdownHandler = loggingSystem.getShutdownHandler();
 			if (shutdownHandler != null && shutdownHookRegistered.compareAndSet(false, true)) {
+				//注册 ShutdownHook
 				registerShutdownHook(new Thread(shutdownHandler));
 			}
 		}

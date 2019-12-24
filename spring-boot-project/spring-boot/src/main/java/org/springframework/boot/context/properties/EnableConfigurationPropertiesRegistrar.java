@@ -32,7 +32,6 @@ import org.springframework.core.type.AnnotationMetadata;
  * @author Phillip Webb
  */
 class EnableConfigurationPropertiesRegistrar implements ImportBeanDefinitionRegistrar {
-
 	@Override
 	public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
 		registerInfrastructureBeans(registry);
@@ -41,6 +40,7 @@ class EnableConfigurationPropertiesRegistrar implements ImportBeanDefinitionRegi
 	}
 
 	private Set<Class<?>> getTypes(AnnotationMetadata metadata) {
+		//获得 @EnableConfigurationProperties 注解的属性值 value
 		return metadata.getAnnotations().stream(EnableConfigurationProperties.class)
 				.flatMap((annotation) -> Arrays.stream(annotation.getClassArray(MergedAnnotation.VALUE)))
 				.filter((type) -> void.class != type).collect(Collectors.toSet());

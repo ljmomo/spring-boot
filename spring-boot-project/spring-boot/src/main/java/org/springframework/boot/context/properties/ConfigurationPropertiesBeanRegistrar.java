@@ -48,13 +48,16 @@ final class ConfigurationPropertiesBeanRegistrar {
 	}
 
 	void register(Class<?> type) {
+
 		MergedAnnotation<ConfigurationProperties> annotation = MergedAnnotations
 				.from(type, SearchStrategy.TYPE_HIERARCHY).get(ConfigurationProperties.class);
 		register(type, annotation);
 	}
 
 	void register(Class<?> type, MergedAnnotation<ConfigurationProperties> annotation) {
+		//通过 @ConfigurationProperties 注解，获得最后要生成的 BeanDefinition 的名字。格式为 prefix-类全名 or 类全名
 		String name = getName(type, annotation);
+		//判断是否已经有该名字的 BeanDefinition 的名字。没有，才进行注册
 		if (!containsBeanDefinition(name)) {
 			registerBeanDefinition(name, type, annotation);
 		}
